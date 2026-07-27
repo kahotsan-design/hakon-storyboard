@@ -14,5 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 复制项目代码
 COPY . .
 
-# Railway 会注入 PORT 环境变量，uvicorn 直接读取
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# 确保启动脚本有执行权限
+RUN chmod +x start.sh
+
+# Railway 会注入 PORT 环境变量，启动脚本读取它
+CMD ["./start.sh"]
