@@ -6,16 +6,39 @@
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <img src="/static/hakon_logo.jpg" alt="HAKON" class="brand-logo">
-      <div>
-        <h1>HAKON 智能剧本处理系统</h1>
-        <div class="subtitle">剧本 → 自动风格分析 → 动作设计 → 分镜 → 镜头指令</div>
+
+  <!-- ════════ 暗语门禁页 ════════ -->
+  <div id="gate-screen" class="gate-screen">
+    <div class="gate-snow" id="gate-snow"></div>
+    <div class="gate-content">
+      <div class="gate-logo-wrap">
+        <img src="/static/hakon_logo.jpg" alt="HAKON" class="gate-logo">
       </div>
+      <h1 class="gate-title">HAKON</h1>
+      <p class="gate-subtitle">智能剧本处理系统</p>
+      <div class="gate-divider"></div>
+      <p class="gate-question">你是谁的人？</p>
+      <div class="gate-input-wrap">
+        <input type="text" id="gate-input" class="gate-input" placeholder="输入暗语…" autocomplete="off" maxlength="20">
+        <button id="gate-submit" class="gate-btn">进入</button>
+      </div>
+      <p id="gate-error" class="gate-error"></p>
+      <p class="gate-hint">仅限受邀用户访问</p>
     </div>
-    <div class="creator">creator：Jiahao Zeng</div>
-  </header>
+  </div>
+
+  <!-- ════════ 主应用 ════════ -->
+  <div id="app-main" class="app-main hidden">
+    <header class="topbar">
+      <div class="brand">
+        <img src="/static/hakon_logo.jpg" alt="HAKON" class="brand-logo">
+        <div>
+          <h1>HAKON 智能剧本处理系统</h1>
+          <div class="subtitle">剧本 → 自动风格分析 → 动作设计 → 分镜 → 镜头指令</div>
+        </div>
+      </div>
+      <div class="creator">creator：Jiahao Zeng</div>
+    </header>
 
   {% if warnings %}
   <div class="warnings">
@@ -88,7 +111,7 @@
               <span id="prompt-preview-title">视频生成 Prompt（可直接复制使用）</span>
               <div class="prompt-actions">
                 <button id="copy-prompt-btn" class="ghost-btn-sm">复制全部</button>
-                <button id="export-txt-btn" class="primary-btn-sm">导出 TXT</button>
+                <button id="export-txt-btn" class="ghost-btn-sm">导出 TXT</button>
                 <button id="export-preview-word-btn" class="ghost-btn-sm">导出 Word</button>
               </div>
             </div>
@@ -98,6 +121,7 @@
       </div>
     </section>
   </main>
+  </div><!-- /app-main -->
 
   <script src="/static/app.js"></script>
 </body>

@@ -1,4 +1,168 @@
 /* HAKON 智能剧本处理系统 —— 清新雪白冰雪主题 */
+
+/* ════════ 暗语门禁页 ════════ */
+.gate-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #d6ecfa 0%, #e8f4fc 30%, #f4f9fd 60%, #eaf3fb 100%);
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+.gate-screen.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.gate-snow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.gate-snow span {
+  position: absolute;
+  top: -20px;
+  color: rgba(184, 224, 245, 0.7);
+  user-select: none;
+  animation: gate-snowfall linear infinite;
+}
+@keyframes gate-snowfall {
+  0% { transform: translateY(-20px) translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(100vh) translateX(30px); opacity: 0; }
+}
+
+.gate-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  width: 380px;
+  max-width: 90vw;
+  padding: 48px 40px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 40px rgba(46, 124, 196, 0.12), 0 2px 8px rgba(46, 124, 196, 0.08);
+  animation: gate-appear 0.8s ease;
+}
+@keyframes gate-appear {
+  0% { opacity: 0; transform: translateY(20px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.gate-logo-wrap {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 20px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(46, 124, 196, 0.3);
+  background: white;
+}
+.gate-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.gate-title {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: var(--accent-deep);
+  text-shadow: 0 2px 8px rgba(46, 124, 196, 0.15);
+}
+.gate-subtitle {
+  font-size: 14px;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+  margin-top: 4px;
+}
+.gate-divider {
+  width: 60px;
+  height: 2px;
+  margin: 24px auto;
+  background: linear-gradient(90deg, transparent, var(--accent-2), transparent);
+  border-radius: 1px;
+}
+.gate-question {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 18px;
+  letter-spacing: 1px;
+}
+.gate-input-wrap {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.gate-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 15px;
+  color: var(--text);
+  outline: none;
+  text-align: center;
+  letter-spacing: 2px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.gate-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(46, 124, 196, 0.12);
+}
+.gate-input::placeholder {
+  letter-spacing: 0;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+.gate-btn {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.05s;
+  box-shadow: 0 4px 12px rgba(46, 124, 196, 0.3);
+  letter-spacing: 2px;
+}
+.gate-btn:hover { opacity: 0.9; }
+.gate-btn:active { transform: scale(0.96); }
+
+.gate-error {
+  color: var(--red);
+  font-size: 13px;
+  min-height: 20px;
+  margin-bottom: 8px;
+  animation: gate-shake 0.4s ease;
+}
+@keyframes gate-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+.gate-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  opacity: 0.7;
+  letter-spacing: 1px;
+}
+
+/* ════════ 主应用容器 ════════ */
+.app-main {
+  height: 100%;
+}
+
 :root {
   --bg: #f4f9fd;
   --bg-elev: #ffffff;

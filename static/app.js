@@ -2,6 +2,69 @@
 
 const $ = (id) => document.getElementById(id);
 
+// ════════ 暗语门禁 ════════
+const GATE_PASSWORD = "畅索";
+
+function initGate() {
+  // 如果 sessionStorage 已通过验证，直接跳过
+  if (sessionStorage.getItem("hakon_gate_passed") === "1") {
+    enterApp();
+    return;
+  }
+  const gate = $("gate-screen");
+  const input = $("gate-input");
+  const submit = $("gate-submit");
+  const error = $("gate-error");
+
+  input.focus();
+
+  function tryEnter() {
+    const val = input.value.trim();
+    if (val === GATE_PASSWORD) {
+      sessionStorage.setItem("hakon_gate_passed", "1");
+      error.textContent = "";
+      gate.classList.add("fade-out");
+      setTimeout(() => {
+        gate.style.display = "none";
+        enterApp();
+      }, 600);
+    } else {
+      error.textContent = "暗语不正确，请重试";
+      input.value = "";
+      input.focus();
+    }
+  }
+  submit.addEventListener("click", tryEnter);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") tryEnter();
+  });
+}
+
+function enterApp() {
+  $("app-main").classList.remove("hidden");
+}
+
+// 生成飘雪动画
+function generateSnow() {
+  const container = $("gate-snow");
+  if (!container) return;
+  const flakes = ["❄", "❅", "❆", "·", "•"];
+  for (let i = 0; i < 30; i++) {
+    const s = document.createElement("span");
+    s.textContent = flakes[Math.floor(Math.random() * flakes.length)];
+    s.style.left = Math.random() * 100 + "%";
+    s.style.fontSize = (8 + Math.random() * 16) + "px";
+    s.style.animationDuration = (8 + Math.random() * 12) + "s";
+    s.style.animationDelay = (Math.random() * 10) + "s";
+    s.style.opacity = 0.3 + Math.random() * 0.5;
+    container.appendChild(s);
+  }
+}
+
+// 启动
+initGate();
+generateSnow();
+
 const MODE_CONFIG = {
   normal: {
     stepLabels: {
@@ -115,7 +178,12 @@ async function generate() {
         handleEvent(evt, mode, startedSteps, (d) => { resultData = d; });
       }
     }
-    if (resultData) renderResult(resultData);
+    if (resultData) {
+      renderResult(resultData);
+      // 生成成功后清空左侧剧本输入框，优化动线
+      $("script").value = "";
+      $("script").blur();
+    }
   } catch (e) {
     alert("生成失败：" + e.message);
     $("empty-state").classList.remove("hidden");
