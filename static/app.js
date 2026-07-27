@@ -435,9 +435,7 @@ function renderShotCard(shot) {
       ${shotRow("景别", shot.camera_angle)}
       ${shotRow("运镜", shot.camera_movement)}
       ${shotRow("主体", shot.main_subject)}
-      ${shotRow("动作", shot.action)}
-      ${shot.facial_expression ? shotRow("微表情", shot.facial_expression) : ""}
-      ${shot.emotion ? shotRow("情绪", shot.emotion) : ""}
+      ${shot.description ? shotRowFull("描述", shot.description) : ""}
       ${dlgText ? shotRow("台词", dlgText) : ""}
       ${shot.reaction ? shotRow("反应", shot.reaction) : ""}
       ${proFields}
@@ -454,6 +452,11 @@ function shotRowPro(label, value) {
 function shotRow(label, value) {
   if (!value) return "";
   return `<div class="shot-row"><span class="label">${label}</span><span class="value">${escapeHtml(value)}</span></div>`;
+}
+
+function shotRowFull(label, value) {
+  if (!value) return "";
+  return `<div class="shot-row shot-row-full"><span class="label">${label}</span><div class="value">${escapeHtml(value)}</div></div>`;
 }
 
 function totalShots(data) {

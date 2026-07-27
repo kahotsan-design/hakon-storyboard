@@ -70,13 +70,13 @@ SYSTEM_PROMPT = """你是一名顶级影视导演与分镜师，专精 AI 视频
    一个动作的全过程要拆开：
    "他起身走向门口" 应拆成多个镜头。
 
-■ 原则6：动作描述要自然、专业
-   不要每句都硬塞"情绪：XX"这种死板格式。
-   action 字段用自然语言写具体可拍摄动作，把情绪融进动作里：
-   好的写法："他猛地站起，椅子向后滑出，手指指向对方，喉结上下滚动"
-   差的写法："他站起。情绪：愤怒。"
-   facial_expression 只在有值得突出的微表情时才写，没有就留空。
-   emotion 字段简短写当前情绪即可，不必每镜都填。
+■ 原则6：description 是一整段自然语言描写，不是标签拼接
+   把动作、微表情、情绪融为一段完整流畅的描写，不要标签化。
+   好的写法："他猛地站起，椅子向后滑出，手指指向对方，喉结上下滚动，
+   瞳孔微缩，嘴角不自觉地抽动一下，愤怒让他的声音压得很低。"
+   差的写法："他站起。情绪：愤怒。微表情：嘴角抽动。"
+   描写要有细节、有层次、有画面感，像导演在片场给演员说戏。
+   不要出现"情绪：""微表情："之类的标签前缀。
 
 ==================================================
 【资产分离 —— 绝对禁止生成以下内容】
@@ -108,7 +108,7 @@ SYSTEM_PROMPT = """你是一名顶级影视导演与分镜师，专精 AI 视频
    如果剧本中同一句台词同时有中英文两个版本，必须两个版本都写入 dialogue，
    格式：中文原文／英文原文（用「／」分隔）。
    绝不可只保留一个版本、丢弃另一个版本。
-   action / facial_expression / emotion / reaction 等描述字段的语言
+   description / reaction 等描述字段的语言
    跟随剧本原文的主要语言。
    shot_type / camera_angle / camera_movement 等镜头语言字段
    统一用中文（远景/中景/特写/固定/推进等）。
@@ -130,9 +130,7 @@ SYSTEM_PROMPT = """你是一名顶级影视导演与分镜师，专精 AI 视频
           "camera_angle": "远景",
           "camera_movement": "固定",
           "main_subject": "人物名或场景",
-          "action": "自然语言动作描述，把情绪融进动作里",
-          "facial_expression": "微表情描述，无则留空",
-          "emotion": "简短情绪，无则留空",
+          "description": "一整段自然语言镜头描写，把动作、微表情、情绪融为一体，细节完整有画面感",
           "speaker": "说话人名，无台词则留空",
           "dialogue": "台词原文，无则留空",
           "reaction": "同镜内背景人物即时反应，无则留空"
@@ -195,9 +193,7 @@ Layer 5: 风格参考 (Style Reference) —— 电影/摄影师/胶片参考，�
           "camera_angle": "远景",
           "camera_movement": "缓慢推进",
           "main_subject": "人物名",
-          "action": "具体可见动作描述",
-          "facial_expression": "微表情",
-          "emotion": "情绪",
+          "description": "一整段自然语言镜头描写，把动作、微表情、情绪融为一体，细节完整有画面感",
           "speaker": "说话人",
           "dialogue": "台词原文",
           "reaction": "背景人物反应",
@@ -261,7 +257,7 @@ class StoryboardDirectorAgent:
             f"1. 每句台词逐字带 speaker 带进对应镜头，不可丢失/改写/合并。\n"
             f"2. 反应镜头必须独立成 shot，不可塞进 reaction 字段。\n"
             f"3. 相邻镜头景别必须不同，禁止连续3个固定运镜。\n"
-            f"4. 切分要细，动作描述要自然专业，不要硬塞情绪标签。\n"
+            f"4. 切分要细，description 写成一段完整自然语言描写，把动作微表情情绪融为一体，不要标签化。\n"
             f"5. 禁止生成外貌/场景资产/光线色彩。"
             f"6. 台词必须逐字保留。如果剧本有中英双版本，必须两个版本都写入 dialogue（用「／」分隔），不可只保留一个。"
         )
@@ -280,9 +276,7 @@ class StoryboardDirectorAgent:
                         camera_angle=sh.get("camera_angle", ""),
                         camera_movement=sh.get("camera_movement", ""),
                         main_subject=sh.get("main_subject", ""),
-                        action=sh.get("action", ""),
-                        facial_expression=sh.get("facial_expression", ""),
-                        emotion=sh.get("emotion", ""),
+                        description=sh.get("description", ""),
                         speaker=sh.get("speaker", ""),
                         dialogue=sh.get("dialogue", ""),
                         reaction=sh.get("reaction", ""),

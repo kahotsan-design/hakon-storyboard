@@ -209,9 +209,7 @@ def build_storyboard_doc(result: StoryboardResult) -> bytes:
                 ("景别", shot.camera_angle),
                 ("运镜", shot.camera_movement),
                 ("主体", shot.main_subject),
-                ("动作", shot.action),
-                ("微表情", shot.facial_expression),
-                ("情绪", shot.emotion),
+                ("描述", shot.description),
             ]
             if shot.dialogue:
                 spk = shot.speaker + "：" if shot.speaker else ""
@@ -312,30 +310,15 @@ def build_video_prompts_text(result) -> str:
                 parts.append(shot.camera_angle)
             if shot.camera_movement:
                 parts.append(shot.camera_movement)
-            # 画面动作：action + facial_expression + emotion 合成
-            desc_parts = []
-            if shot.action:
-                desc_parts.append(shot.action)
-            if shot.facial_expression:
-                desc_parts.append(shot.facial_expression)
-            if shot.emotion:
-                desc_parts.append(f"情绪：{shot.emotion}")
-            desc = "。".join(desc_parts) if desc_parts else ""
-            # 组装第一行：景别。运镜。主体+画面描述
-            # 顺序参考用户模板：景别在前，主体融入描述
+            # 画面描述：用 description
             first_line_parts = []
             if parts:
                 first_line_parts.append("。".join(parts))
-            # 主体 + 画面描述合成一段
             desc_with_subject = []
             if shot.main_subject:
                 desc_with_subject.append(shot.main_subject)
-            if shot.action:
-                desc_with_subject.append(shot.action)
-            if shot.facial_expression:
-                desc_with_subject.append(shot.facial_expression)
-            if shot.emotion:
-                desc_with_subject.append(f"情绪{shot.emotion}")
+            if hasattr(shot, 'description') and shot.description:
+                desc_with_subject.append(shot.description)
             if desc_with_subject:
                 first_line_parts.append("，".join(desc_with_subject))
             first_line = "。".join(first_line_parts) if first_line_parts else ""

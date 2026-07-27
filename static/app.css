@@ -578,6 +578,14 @@ input[type="range"] {
 .shot-row .label { color: var(--text-dim); }
 .shot-row .value { color: var(--text); }
 
+.shot-row-full {
+  grid-template-columns: 80px 1fr;
+}
+.shot-row-full .value {
+  line-height: 1.8;
+  color: var(--text);
+}
+
 .shot-prompt {
   margin-top: 10px;
   padding: 10px 12px;
