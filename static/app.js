@@ -6,15 +6,17 @@ const $ = (id) => document.getElementById(id);
 const GATE_PASSWORD = "畅索";
 
 function initGate() {
-  // 如果 sessionStorage 已通过验证，直接跳过
-  if (sessionStorage.getItem("hakon_gate_passed") === "1") {
-    enterApp();
-    return;
-  }
   const gate = $("gate-screen");
   const input = $("gate-input");
   const submit = $("gate-submit");
   const error = $("gate-error");
+
+  // 如果 sessionStorage 已通过验证，直接跳过门禁
+  if (sessionStorage.getItem("hakon_gate_passed") === "1") {
+    gate.style.display = "none";
+    enterApp();
+    return;
+  }
 
   input.focus();
 
