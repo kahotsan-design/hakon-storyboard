@@ -36,11 +36,9 @@ templates = Jinja2Templates(directory=BASE_DIR / "templates")
 async def index(request: Request):
     warnings = config.validate()
     return templates.TemplateResponse(
+        request,
         "index.html",
-        {
-            "request": request,
-            "warnings": warnings,
-        },
+        {"warnings": warnings},
     )
 
 
