@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>HAKON 智能剧本处理系统</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="/static/hakon_logo.jpg" alt="HAKON" class="brand-logo">
+      <div>
+        <h1>HAKON 智能剧本处理系统</h1>
+        <div class="subtitle">剧本 → 自动风格分析 → 动作设计 → 分镜 → 镜头指令</div>
+      </div>
+    </div>
+    <div class="creator">creator：Jiahao Zeng</div>
+  </header>
+
+  {% if warnings %}
+  <div class="warnings">
+    {% for w in warnings %}
+    <div class="warn-item">⚠️ {{ w }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <main class="layout">
+    <section class="panel input-panel">
+      <h2>模式选择</h2>
+      <div class="mode-tabs">
+        <label class="mode-tab active" id="tab-normal">
+          <input type="radio" name="mode" value="normal" checked>
+          <span class="mode-name">普通（短剧）模式</span>
+          <span class="mode-desc">情绪/动作/镜头语言</span>
+        </label>
+        <label class="mode-tab" id="tab-pro">
+          <input type="radio" name="mode" value="pro">
+          <span class="mode-name">专业模式</span>
+          <span class="mode-desc">五层电影感 Prompt（中英对照）</span>
+        </label>
+        <label class="mode-tab" id="tab-narration">
+          <input type="radio" name="mode" value="narration">
+          <span class="mode-name">旁白视觉化模式</span>
+          <span class="mode-desc">删除旁白，转为纯视觉化剧本</span>
+        </label>
+      </div>
+
+      <h2>剧本输入</h2>
+      <div class="form-group">
+        <label id="input-label">原始剧本（AI 会自动分析风格并改编）</label>
+        <textarea id="script" placeholder="在此粘贴剧本，支持多场次…&#10;格式建议：&#10;第一场 内景 · 地点 · 时间&#10;人物对白与动作描写&#10;&#10;人物名：台词"></textarea>
+      </div>
+      <button id="generate-btn" class="primary-btn">生成分镜</button>
+    </section>
+
+    <section class="panel output-panel">
+      <div id="progress-area" class="progress-area hidden">
+        <div class="progress-title">正在生成…</div>
+        <ul id="progress-list"></ul>
+      </div>
+
+      <div id="empty-state" class="empty-state">
+        <div class="empty-icon">❄</div>
+        <p id="empty-text">分镜将显示在这里</p>
+        <p class="hint" id="empty-hint">填入剧本，点击「生成分镜」</p>
+      </div>
+
+      <div id="result-area" class="result-area hidden">
+        <div class="result-header">
+          <div>
+            <h2 id="result-title"></h2>
+            <p id="result-meta" class="meta"></p>
+          </div>
+          <div class="export-btns">
+            <button id="export-word-btn" class="primary-btn-sm">导出 Word</button>
+            <button id="export-btn" class="ghost-btn">导出 JSON</button>
+          </div>
+        </div>
+
+        <div id="understanding-block" class="understanding-block"></div>
+        <div id="scenes-container"></div>
+
+        <div id="video-prompt-section" class="video-prompt-section">
+          <button id="convert-prompt-btn" class="convert-btn">▼ 转换为视频 Prompt</button>
+          <div id="prompt-preview" class="prompt-preview hidden">
+            <div class="prompt-preview-header">
+              <span id="prompt-preview-title">视频生成 Prompt（可直接复制使用）</span>
+              <div class="prompt-actions">
+                <button id="copy-prompt-btn" class="ghost-btn-sm">复制全部</button>
+                <button id="export-txt-btn" class="primary-btn-sm">导出 TXT</button>
+                <button id="export-preview-word-btn" class="ghost-btn-sm">导出 Word</button>
+              </div>
+            </div>
+            <pre id="prompt-text"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
