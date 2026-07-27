@@ -34,3 +34,4 @@ Thumbs.db
 # 临时导出文件
 sample_export.docx
 exports/
+core.*
