@@ -607,6 +607,49 @@ input[type="range"] {
 
 .hidden { display: none !important; }
 
+/* 错误提示框 */
+.error-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fef0f0;
+  border: 1px solid #f5c2c2;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 12px rgba(208, 80, 80, 0.1);
+}
+.error-icon {
+  font-size: 24px;
+  color: var(--red);
+  flex-shrink: 0;
+}
+.error-content { flex: 1; }
+.error-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--red);
+  margin-bottom: 4px;
+}
+.error-msg {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.5;
+}
+.error-retry-btn {
+  background: var(--accent);
+  border: none;
+  color: white;
+  padding: 8px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.error-retry-btn:hover { opacity: 0.9; }
+
 /* 滚动条 */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }

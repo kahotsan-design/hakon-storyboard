@@ -187,13 +187,49 @@ async function generate() {
       $("script").blur();
     }
   } catch (e) {
-    alert("生成失败：" + e.message);
+    showError(e.message);
     $("empty-state").classList.remove("hidden");
   } finally {
     $("generate-btn").disabled = false;
     $("generate-btn").textContent = cfg.btnText;
     $("progress-area").classList.add("hidden");
   }
+}
+
+function showError(msg) {
+  // 友好的错误提示，替代 alert
+  const friendly = _friendlyError(msg);
+  const area = $("progress-area").parentNode;
+  let errBox = document.getElementById("error-box");
+  if (errBox) errBox.remove();
+  errBox = document.createElement("div");
+  errBox.id = "error-box";
+  errBox.className = "error-box";
+  errBox.innerHTML = `
+    <div class="error-icon">⚠</div>
+    <div class="error-content">
+      <div class="error-title">生成失败</div>
+      <div class="error-msg">${escapeHtml(friendly)}</div>
+    </div>
+    <button class="error-retry-btn" onclick="document.getElementById('error-box').remove(); document.getElementById('generate-btn').click();">重试</button>
+  `;
+  area.insertBefore(errBox, $("progress-area"));
+}
+
+function _friendlyError(msg) {
+  if (!msg) return "未知错误";
+  const m = msg.toLowerCase();
+  if (m.includes("timeout") || m.includes("timed out"))
+    return "请求超时，服务器响应太慢。可能是同时使用人数较多，请稍后重试。";
+  if (m.includes("429") || m.includes("rate limit"))
+    return "API 调用频率超限，请等待几秒后重试。";
+  if (m.includes("connection") || m.includes("reset"))
+    return "网络连接中断，请检查网络后重试。";
+  if (m.includes("json"))
+    return "AI 返回的数据格式异常，系统已自动重试但仍失败。请稍后重试，或尝试缩短剧本。";
+  if (m.includes("api_key") || m.includes("unauthorized"))
+    return "API 密钥配置异常，请联系管理员。";
+  return msg;
 }
 
 function parseSSEBlock(block) {
