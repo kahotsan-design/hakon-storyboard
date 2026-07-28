@@ -343,14 +343,12 @@ function renderResult(data) {
   }
 
   // 导出按钮
-  $("export-btn").onclick = () => exportJSON(data);
   $("export-word-btn").onclick = () => exportWord(data);
 
   let currentPromptText = "";
   $("convert-prompt-btn").onclick = () => convertToVideoPrompt(data);
   $("copy-prompt-btn").onclick = () => copyPrompt(currentPromptText);
-  $("export-txt-btn").onclick = () => exportTxt(data, currentPromptText);
-  $("export-preview-word-btn").onclick = () => exportWord(data);
+  $("export-preview-word-btn").onclick = () => exportPromptWord(data, currentPromptText);
   $("export-preview-word-btn").classList.remove("hidden");
   $("prompt-preview-title").textContent = "视频生成 Prompt（可直接复制使用）";
 
@@ -389,16 +387,14 @@ function renderNarrationResult(data) {
     container.appendChild(renderNarrationScene(scene));
   }
 
-  // narration 模式：提供 Word/TXT/JSON 导出，隐藏视频 Prompt
+  // narration 模式：提供 Word 导出，隐藏视频 Prompt
   $("export-word-btn").classList.remove("hidden");
   $("convert-prompt-btn").classList.add("hidden");
   $("prompt-preview").classList.add("hidden");
 
-  $("export-btn").onclick = () => exportJSON(data);
   $("export-word-btn").onclick = () => exportNarrationWord(data);
 
   let currentNarrationText = "";
-  $("export-txt-btn").onclick = () => exportNarrationTxt(data, currentNarrationText);
   $("copy-prompt-btn").onclick = () => copyPrompt(currentNarrationText);
   $("export-preview-word-btn").onclick = () => exportNarrationWord(data);
   $("export-preview-word-btn").classList.remove("hidden");
@@ -499,16 +495,6 @@ function totalShots(data) {
   return data.scenes.reduce((n, s) => n + s.shots.length, 0);
 }
 
-function exportJSON(data) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${data.title || "storyboard"}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 async function exportWord(data) {
   const btn = $("export-word-btn");
   const original = btn.textContent;
@@ -546,26 +532,31 @@ function copyPrompt(text) {
   });
 }
 
-function exportTxt(data, currentPromptText) {
-  if (!currentPromptText) return;
-  const blob = new Blob([currentPromptText], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${data.title || "storyboard"}_视频Prompt.txt`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function exportNarrationTxt(data, currentNarrationText) {
-  if (!currentNarrationText) return;
-  const blob = new Blob([currentNarrationText], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${data.title || "storyboard"}_旁白视觉化剧本.txt`;
-  a.click();
-  URL.revokeObjectURL(url);
+async function exportPromptWord(data, currentPromptText) {
+  const btn = $("export-preview-word-btn");
+  const original = btn.textContent;
+  btn.textContent = "生成中…";
+  btn.disabled = true;
+  try {
+    const resp = await fetch("/api/export/prompt-word", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data }),
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${data.title || "storyboard"}_视频Prompt.docx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert("Prompt Word 导出失败：" + e.message);
+  } finally {
+    btn.textContent = original;
+    btn.disabled = false;
+  }
 }
 
 async function exportNarrationWord(data) {

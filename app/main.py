@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 from app.config import config
 from app.pipeline import Pipeline
 from app.schemas.models import StoryboardResult
-from app.services.export import build_storyboard_doc, build_video_prompts_text, build_narration_text
+from app.services.export import build_storyboard_doc, build_video_prompts_text, build_video_prompts_doc, build_narration_text
 
 logger = logging.getLogger("ai-storyboard")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -186,6 +186,23 @@ async def export_video_prompts(req: ExportRequest):
     return Response(
         content=text.encode("utf-8"),
         media_type="text/plain; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"},
+    )
+
+
+@app.post("/api/export/prompt-word")
+async def export_prompt_word(req: ExportRequest):
+    """导出视频生成 Prompt 的 Word 文档。"""
+    try:
+        result = StoryboardResult.model_validate(req.data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"数据格式错误：{e}")
+    doc_bytes = build_video_prompts_doc(result)
+    title = result.title or "storyboard"
+    filename = quote(f"{title}_视频Prompt.docx")
+    return Response(
+        content=doc_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"},
     )
 

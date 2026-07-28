@@ -340,9 +340,164 @@ def build_video_prompts_text(result) -> str:
     return "\n".join(lines).strip() + "\n"
 
 
-# ──────────────────────────────────────────────
-# 旁白视觉化模式导出
-# ──────────────────────────────────────────────
+def build_video_prompts_doc(result: StoryboardResult) -> bytes:
+    """把分镜转换为 AI 视频生成 Prompt 的 Word 文档。
+
+    与 build_video_prompts_text 内容一致，但格式化为 Word 文档，
+    便于用户直接分享或打印给视频制作人员。
+    """
+    doc = Document()
+
+    # 全局字体
+    style = doc.styles["Normal"]
+    style.font.name = "微软雅黑"
+    style.font.size = Pt(10.5)
+    style.element.rPr.rFonts.set(qn("w:eastAsia"), "微软雅黑")
+
+    for section in doc.sections:
+        section.top_margin = Cm(2)
+        section.bottom_margin = Cm(2)
+        section.left_margin = Cm(2.2)
+        section.right_margin = Cm(2.2)
+
+    # 封面
+    title_p = doc.add_paragraph()
+    title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    title_p.space_before = Pt(60)
+    run = title_p.add_run("HAKON 智能剧本处理系统")
+    run.font.size = Pt(26)
+    run.font.bold = True
+    run.font.color.rgb = RGBColor.from_string(ICE_DEEP)
+
+    sub_p = doc.add_paragraph()
+    sub_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = sub_p.add_run("视频生成 Prompt")
+    run.font.size = Pt(16)
+    run.font.color.rgb = RGBColor.from_string(ICE_BLUE)
+    _set_run_east_asia(run)
+
+    doc.add_paragraph()
+
+    # 标题信息
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(result.title or "未命名剧本")
+    run.font.size = Pt(14)
+    run.font.bold = True
+    run.font.color.rgb = RGBColor.from_string(ICE_DEEP)
+    _set_run_east_asia(run)
+
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(
+        f"共 {len(result.scenes)} 场戏  ·  "
+        f"{result.total_shots()} 个镜头  ·  "
+        f"生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M')}"
+    )
+    run.font.size = Pt(10)
+    run.font.color.rgb = RGBColor.from_string(ICE_GREY)
+
+    doc.add_page_break()
+
+    # 各场景 Prompt
+    global_idx = 0
+    for scene in result.scenes:
+        # 场景标题
+        h = doc.add_paragraph()
+        run = h.add_run(f"{scene.scene_id}  {scene.scene_heading}")
+        run.font.size = Pt(14)
+        run.font.bold = True
+        run.font.color.rgb = RGBColor.from_string(ICE_DEEP)
+        _set_run_east_asia(run)
+
+        doc.add_paragraph()
+
+        for shot in scene.shots:
+            global_idx += 1
+
+            # 镜号标题
+            p = doc.add_paragraph()
+            run = p.add_run(f"【镜{global_idx}】")
+            run.font.size = Pt(12)
+            run.font.bold = True
+            run.font.color.rgb = RGBColor.from_string(ICE_BLUE)
+            _set_run_east_asia(run)
+
+            # 景别 + 运镜 + 画面描述
+            parts = []
+            if shot.camera_angle:
+                parts.append(shot.camera_angle)
+            if shot.camera_movement:
+                parts.append(shot.camera_movement)
+            first_line_parts = []
+            if parts:
+                first_line_parts.append("。".join(parts))
+            desc_with_subject = []
+            if shot.main_subject:
+                desc_with_subject.append(shot.main_subject)
+            if hasattr(shot, "description") and shot.description:
+                desc_with_subject.append(shot.description)
+            if desc_with_subject:
+                first_line_parts.append("，".join(desc_with_subject))
+            first_line = "。".join(first_line_parts) if first_line_parts else ""
+            if first_line and not first_line.endswith("。"):
+                first_line += "。"
+
+            p = doc.add_paragraph()
+            p.paragraph_format.first_line_indent = Cm(0.5)
+            run = p.add_run(first_line)
+            run.font.size = Pt(11)
+            run.font.color.rgb = RGBColor.from_string(ICE_GREY)
+            _set_run_east_asia(run)
+
+            # 专业模式：英文 Prompt + 中文对照
+            if hasattr(shot, "full_prompt") and shot.full_prompt and shot.full_prompt.strip():
+                p = doc.add_paragraph()
+                p.paragraph_format.first_line_indent = Cm(0.5)
+                run = p.add_run(f"[英文Prompt] {shot.full_prompt.strip()}")
+                run.font.size = Pt(10)
+                run.font.italic = True
+                run.font.color.rgb = RGBColor.from_string(ICE_GREY)
+                run.font.name = "Consolas"
+                _set_run_east_asia(run, "微软雅黑")
+
+                if hasattr(shot, "full_prompt_zh") and shot.full_prompt_zh and shot.full_prompt_zh.strip():
+                    p = doc.add_paragraph()
+                    p.paragraph_format.first_line_indent = Cm(0.5)
+                    run = p.add_run(f"[中文对照] {shot.full_prompt_zh.strip()}")
+                    run.font.size = Pt(10)
+                    run.font.color.rgb = RGBColor.from_string(ICE_GREY)
+                    _set_run_east_asia(run)
+
+            # 台词
+            if shot.dialogue and shot.dialogue.strip():
+                dlg = shot.dialogue.strip()
+                spk = shot.speaker if shot.speaker else (shot.main_subject if shot.main_subject else "人物")
+                p = doc.add_paragraph()
+                p.paragraph_format.first_line_indent = Cm(0.5)
+                run = p.add_run(f"{spk}台词：{dlg}")
+                run.font.size = Pt(11)
+                run.font.bold = True
+                run.font.color.rgb = RGBColor.from_string(ICE_DEEP)
+                _set_run_east_asia(run)
+
+            # 结尾标记
+            p = doc.add_paragraph()
+            p.paragraph_format.first_line_indent = Cm(0.5)
+            run = p.add_run("无背景音乐，无字幕。")
+            run.font.size = Pt(10)
+            run.font.color.rgb = RGBColor.from_string(ICE_GREY)
+            _set_run_east_asia(run)
+
+            # 镜头间空行
+            doc.add_paragraph()
+
+        # 场景间分页
+        doc.add_page_break()
+
+    buf = io.BytesIO()
+    doc.save(buf)
+    return buf.getvalue()
 
 def build_narration_text(result: StoryboardResult) -> str:
     """将旁白视觉化改写结果导出为纯文本剧本正文。"""
