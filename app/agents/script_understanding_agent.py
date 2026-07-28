@@ -50,7 +50,18 @@ SYSTEM_PROMPT = """你是一名专业影视剧本分析专家与改编导演。
      - 这些台词是旁白/画外音，不是角色当场说出口的对话
      - "解说慢"风格剧本可能旁白比例极高，甚至超过50%，必须全部识别并保留
 
-6. 风格类型 genre 和基调 tone 由你根据剧本内容自动判断，不要问用户。
+6. 【action_beats 动作节拍 —— 与台词同等重要】
+   每场戏的 action_beats 数组必须包含剧本中该场出现的【每一个动作描写、场景变化、人物移动】，按时间顺序逐条列出。
+   - 一条 action_beat 对应剧本中的一个动作/事件，不可省略、不可合并、不可概括。
+   - 包括但不限于：人物进出场景、人物移动、人物做某个动作、场景变化、物品传递、表情/姿态变化描写。
+   - 剧本原文中的旁白描写也必须提取为 action_beat（如"万斯庄园的大门缓缓打开，我被领进客厅"就是一条 action_beat）。
+   - 台词之外的所有叙事文本，都必须提取为 action_beat。
+   - 开场动作（人物如何进入场景、场景如何建立）必须作为前几条 action_beat。
+   - 这是为了确保分镜阶段不会丢失任何动作和情节。
+   - 示例：剧本写"林然推门走进办公室，把文件摔在桌上"，
+     action_beats 就是 ["林然推门走进办公室", "林然把文件摔在桌上"]。
+
+7. 风格类型 genre 和基调 tone 由你根据剧本内容自动判断，不要问用户。
 
 【输出格式】
 返回 JSON，结构如下：
@@ -76,6 +87,10 @@ SYSTEM_PROMPT = """你是一名专业影视剧本分析专家与改编导演。
       "conflict": "本场冲突节点",
       "emotional_arc": "本场情绪走向",
       "summary": "本场剧情摘要",
+      "action_beats": [
+        "动作节拍1：剧本中的动作描写原文",
+        "动作节拍2：..."
+      ],
       "dialogues": [
         {"speaker": "人物名", "line": "台词原文"}
       ]
@@ -116,6 +131,7 @@ class ScriptUnderstandingAgent:
                 )
                 for d in s.get("dialogues", [])
             ]
+            action_beats_list = s.get("action_beats", [])
             scenes.append(
                 SceneBreakdown(
                     scene_id=s.get("scene_id", f"S{len(scenes)+1}"),
@@ -125,6 +141,7 @@ class ScriptUnderstandingAgent:
                     conflict=s.get("conflict", ""),
                     emotional_arc=s.get("emotional_arc", ""),
                     summary=s.get("summary", ""),
+                    action_beats=action_beats_list,
                     dialogues=dlgs,
                 )
             )

@@ -40,6 +40,7 @@ class SceneBreakdown(BaseModel):
     conflict: str = Field("", description="本场冲突节点")
     emotional_arc: str = Field("", description="本场情绪走向")
     summary: str = Field("", description="本场剧情摘要")
+    action_beats: list[str] = Field(default_factory=list, description="本场所有动作节拍：剧本中出现的每一个动作描写、场景变化、人物移动，按时间顺序逐条列出，不可省略、不可合并、不可概括")
     dialogues: list[DialogueLine] = Field(default_factory=list, description="本场所有台词，带说话人，逐字保留")
 
 
