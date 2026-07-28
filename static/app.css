@@ -734,6 +734,13 @@ input[type="range"] {
   gap: 10px;
   margin-bottom: 18px;
 }
+.mode-tabs--two {
+  grid-template-columns: 1fr 1fr;
+}
+.mode-tab--hidden {
+  display: none !important;
+  pointer-events: none !important;
+}
 .mode-tab {
   display: flex;
   flex-direction: column;

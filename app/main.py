@@ -87,12 +87,24 @@ async def generate(req: GenerateRequest):
         task = asyncio.create_task(asyncio.to_thread(run_pipeline))
         try:
             while True:
-                event, data = await queue.get()
-                yield f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
-                if event in ("complete", "error"):
-                    break
+                try:
+                    # 15秒心跳超时：如果15秒内没有新事件，发送心跳保持连接
+                    event, data = await asyncio.wait_for(queue.get(), timeout=15.0)
+                    yield f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+                    if event in ("complete", "error"):
+                        break
+                except asyncio.TimeoutError:
+                    # 发送心跳注释，防止代理/浏览器超时断开
+                    yield ": heartbeat\n\n"
+        except asyncio.CancelledError:
+            pass
         finally:
-            await task
+            if not task.done():
+                task.cancel()
+                try:
+                    await task
+                except (asyncio.CancelledError, Exception):
+                    pass
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(

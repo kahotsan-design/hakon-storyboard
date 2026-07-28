@@ -51,14 +51,14 @@
   <main class="layout">
     <section class="panel input-panel">
       <h2>模式选择</h2>
-      <div class="mode-tabs">
+      <div class="mode-tabs mode-tabs--two">
         <label class="mode-tab active" id="tab-normal">
           <input type="radio" name="mode" value="normal" checked>
           <span class="mode-name">普通（短剧）模式</span>
           <span class="mode-desc">情绪/动作/镜头语言</span>
         </label>
-        <label class="mode-tab" id="tab-pro">
-          <input type="radio" name="mode" value="pro">
+        <label class="mode-tab mode-tab--hidden" id="tab-pro">
+          <input type="radio" name="mode" value="pro" disabled>
           <span class="mode-name">专业模式</span>
           <span class="mode-desc">五层电影感 Prompt（中英对照）</span>
         </label>
