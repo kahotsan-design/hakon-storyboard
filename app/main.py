@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import traceback
 from pathlib import Path
 from urllib.parse import quote
 
@@ -26,6 +27,19 @@ app = FastAPI(title="HAKON 智能剧本处理系统")
 
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
+
+
+# ──────────────────────────────────────────────
+# 全局异常处理 —— 防止未捕获异常导致服务崩溃
+# ──────────────────────────────────────────────
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"未捕获异常: {exc}\n{traceback.format_exc()}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"服务器内部错误：{str(exc)[:200]}"},
+    )
 
 
 # ──────────────────────────────────────────────
@@ -80,8 +94,12 @@ async def generate(req: GenerateRequest):
             else:
                 emit_sync("complete", {"total_shots": result.total_shots()})
         except Exception as e:
-            logger.exception("生成失败")
-            emit_sync("error", {"message": str(e)})
+            logger.error(f"生成失败: {e}\n{traceback.format_exc()}")
+            emit_sync("error", {"message": str(e)[:500]})
+        except BaseException as e:
+            # 捕获 BaseException（如 SystemExit、KeyboardInterrupt）防止线程静默退出
+            logger.error(f"生成被中断: {e}\n{traceback.format_exc()}")
+            emit_sync("error", {"message": f"生成被中断：{str(e)[:200]}"})
 
     async def sse_stream():
         task = asyncio.create_task(asyncio.to_thread(run_pipeline))
@@ -120,12 +138,23 @@ async def generate(req: GenerateRequest):
 
 @app.get("/api/health")
 async def health():
+    """Render 健康检查端点。返回 200 说明服务存活。"""
     return {
         "status": "ok",
         "model": config.DEEPSEEK_MODEL,
         "api_configured": bool(config.DEEPSEEK_API_KEY),
         "warnings": config.validate(),
     }
+
+
+@app.on_event("startup")
+async def startup_event():
+    """服务启动时记录日志。"""
+    logger.info("=" * 50)
+    logger.info("HAKON 智能剧本处理系统启动")
+    logger.info(f"模型: {config.DEEPSEEK_MODEL}")
+    logger.info(f"API 已配置: {bool(config.DEEPSEEK_API_KEY)}")
+    logger.info("=" * 50)
 
 
 @app.get("/api/sample")
@@ -162,32 +191,38 @@ class ExportRequest(BaseModel):
 async def export_word(req: ExportRequest):
     try:
         result = StoryboardResult.model_validate(req.data)
+        doc_bytes = build_storyboard_doc(result)
+        title = result.title or "storyboard"
+        filename = quote(f"{title}_分镜报告.docx")
+        return Response(
+            content=doc_bytes,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"},
+        )
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"数据格式错误：{e}")
-    doc_bytes = build_storyboard_doc(result)
-    title = result.title or "storyboard"
-    filename = quote(f"{title}_分镜报告.docx")
-    return Response(
-        content=doc_bytes,
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"},
-    )
+        logger.error(f"Word导出失败: {e}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"导出失败：{str(e)[:200]}")
 
 
 @app.post("/api/export/video-prompts")
 async def export_video_prompts(req: ExportRequest):
     try:
         result = StoryboardResult.model_validate(req.data)
+        text = build_video_prompts_text(result)
+        title = result.title or "storyboard"
+        filename = quote(f"{title}_视频Prompt.txt")
+        return Response(
+            content=text.encode("utf-8"),
+            media_type="text/plain; charset=utf-8",
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"},
+        )
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"数据格式错误：{e}")
-    text = build_video_prompts_text(result)
-    title = result.title or "storyboard"
-    filename = quote(f"{title}_视频Prompt.txt")
-    return Response(
-        content=text.encode("utf-8"),
-        media_type="text/plain; charset=utf-8",
-        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"},
-    )
+        logger.error(f"视频Prompt导出失败: {e}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"导出失败：{str(e)[:200]}")
 
 
 @app.post("/api/export/prompt-word")
@@ -195,16 +230,19 @@ async def export_prompt_word(req: ExportRequest):
     """导出视频生成 Prompt 的 Word 文档。"""
     try:
         result = StoryboardResult.model_validate(req.data)
+        doc_bytes = build_video_prompts_doc(result)
+        title = result.title or "storyboard"
+        filename = quote(f"{title}_视频Prompt.docx")
+        return Response(
+            content=doc_bytes,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"},
+        )
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"数据格式错误：{e}")
-    doc_bytes = build_video_prompts_doc(result)
-    title = result.title or "storyboard"
-    filename = quote(f"{title}_视频Prompt.docx")
-    return Response(
-        content=doc_bytes,
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"},
-    )
+        logger.error(f"Prompt Word导出失败: {e}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"导出失败：{str(e)[:200]}")
 
 
 @app.post("/api/export/narration")
@@ -212,14 +250,17 @@ async def export_narration(req: ExportRequest):
     """旁白视觉化模式：导出改写后的纯视觉化剧本文本。"""
     try:
         result = StoryboardResult.model_validate(req.data)
+        if result.mode != "narration":
+            raise HTTPException(status_code=400, detail="仅旁白视觉化模式支持此导出")
+        text = build_narration_text(result)
+        filename = quote(f"{result.title or 'storyboard'}_旁白视觉化剧本.txt")
+        return Response(
+            content=text.encode("utf-8"),
+            media_type="text/plain; charset=utf-8",
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"},
+        )
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"数据格式错误：{e}")
-    if result.mode != "narration":
-        raise HTTPException(status_code=400, detail="仅旁白视觉化模式支持此导出")
-    text = build_narration_text(result)
-    filename = quote(f"{result.title or 'storyboard'}_旁白视觉化剧本.txt")
-    return Response(
-        content=text.encode("utf-8"),
-        media_type="text/plain; charset=utf-8",
-        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"},
-    )
+        logger.error(f"旁白导出失败: {e}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"导出失败：{str(e)[:200]}")
