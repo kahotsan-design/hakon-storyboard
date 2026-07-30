@@ -1,14 +1,23 @@
 """HAKON 桌面应用启动器。
 
-自动启动本地 FastAPI 服务，并打开浏览器。
-用户双击运行即可，无需安装任何依赖。
+双击运行后弹出独立桌面窗口，内嵌完整应用界面。
+无浏览器、无黑色控制台、像一个正常的桌面软件。
 """
 import os
 import sys
 import time
 import threading
-import webbrowser
 import socket
+import logging
+
+# 日志写入文件，不显示控制台
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    filename=os.path.join(os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.path.dirname(__file__), "HAKON.log"),
+    filemode="a",
+)
+logger = logging.getLogger("HAKON")
 
 
 def find_free_port():
@@ -32,57 +41,66 @@ def wait_for_server(port, timeout=30):
     return False
 
 
-def open_browser(port):
-    """等待服务器就绪后打开浏览器。"""
-    if wait_for_server(port):
-        url = f"http://127.0.0.1:{port}"
-        print(f"正在打开浏览器: {url}")
-        webbrowser.open(url)
-    else:
-        print("服务器启动超时，请稍后手动打开浏览器。")
-
-
-def main():
-    # 设置工作目录为 exe 所在目录
+def start_server(port, ready_event):
+    """在后台线程中启动 FastAPI 服务。"""
     if getattr(sys, "frozen", False):
-        # PyInstaller 打包后
         base_dir = os.path.dirname(sys.executable)
         os.chdir(base_dir)
 
-    # 找可用端口
-    port = find_free_port()
     os.environ["PORT"] = str(port)
 
-    print("=" * 50)
-    print("  HAKON 智能剧本处理系统")
-    print("=" * 50)
-    print(f"  本地端口: http://127.0.0.1:{port}")
-    print(f"  按 Ctrl+C 退出")
-    print("=" * 50)
-
-    # 启动浏览器线程
-    browser_thread = threading.Thread(target=open_browser, args=(port,), daemon=True)
-    browser_thread.start()
-
-    # 直接导入 app 对象，避免字符串导入方式导致 PyInstaller 无法追踪
-    # （PyInstaller 静态分析无法解析 "app.main:app" 这样的字符串引用）
-    from app.main import app
-
-    # 启动 FastAPI 服务
     try:
+        from app.main import app
         import uvicorn
         uvicorn.run(
-            app,          # 直接传入 app 对象，而非字符串
+            app,
             host="127.0.0.1",
             port=port,
-            log_level="info",
+            log_level="warning",  # 减少日志输出
+            log_config=None,
         )
-    except KeyboardInterrupt:
-        print("\n正在退出...")
     except Exception as e:
-        print(f"启动失败: {e}")
-        input("按回车键退出...")
+        logger.error(f"Server failed: {e}", exc_info=True)
+        ready_event.set()  # 释放等待
+
+
+def main():
+    port = find_free_port()
+
+    # 启动后台服务器
+    ready_event = threading.Event()
+    server_thread = threading.Thread(
+        target=start_server,
+        args=(port, ready_event),
+        daemon=True,
+    )
+    server_thread.start()
+
+    # 等待服务器就绪
+    if not wait_for_server(port, timeout=30):
+        # 服务器启动失败
+        try:
+            import tkinter as tk
+            from tkinter import messagebox
+            root = tk.Tk()
+            root.withdraw()
+            messagebox.showerror("HAKON", "服务器启动失败，请检查 HAKON.log 文件。")
+        except Exception:
+            pass
         sys.exit(1)
+
+    # 打开桌面窗口
+    import webview
+    url = f"http://127.0.0.1:{port}"
+    webview.create_window(
+        title="HAKON - AI影视剧本改编与分镜生成系统",
+        url=url,
+        width=1280,
+        height=800,
+        min_size=(960, 600),
+        text_select=False,
+    )
+    webview.start()
 
 
 if __name__ == "__main__":

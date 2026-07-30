@@ -53,5 +53,6 @@ echo   Main program:  dist\HAKON\HAKON.exe
 echo ============================================================
 echo.
 echo Double-click HAKON.exe to run the app.
+echo Send the entire dist\HAKON folder to others.
 echo.
 pause
