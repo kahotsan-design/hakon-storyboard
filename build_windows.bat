@@ -27,13 +27,18 @@ if errorlevel 1 (
 echo.
 echo [2/5] Checking .env file...
 if not exist .env (
-    echo [WARNING] .env file not found.
-    set /p APIKEY=Please enter your DeepSeek API Key: 
+    echo [INFO] .env file not found. This is normal for first-time setup.
+    echo Your API Key is needed to power the AI features.
+    echo You can get one from: https://platform.deepseek.com/api_keys
+    echo.
+    set /p APIKEY=Please paste your DeepSeek API Key (sk-xxx): 
     echo # DeepSeek API config > .env
     echo DEEPSEEK_API_KEY=%APIKEY% >> .env
     echo. >> .env
     echo DEEPSEEK_MODEL=deepseek-chat >> .env
     echo .env created successfully
+) else (
+    echo .env found. Using existing config.
 )
 
 echo.
