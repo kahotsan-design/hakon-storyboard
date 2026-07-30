@@ -4,6 +4,8 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
+import sys
 import traceback
 from pathlib import Path
 from urllib.parse import quote
@@ -22,11 +24,33 @@ from app.services.export import build_storyboard_doc, build_video_prompts_text, 
 logger = logging.getLogger("ai-storyboard")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
-BASE_DIR = Path(__file__).resolve().parent.parent  # 项目根目录
+
+def _get_base_dir() -> Path:
+    """获取项目根目录，兼容 PyInstaller 打包环境。
+
+    - 正常运行: __file__ 所在的 app/ 的上级目录
+    - PyInstaller 打包: sys._MEIPASS 临时解压目录（数据文件在此处）
+    """
+    if getattr(sys, "frozen", False):
+        # PyInstaller 打包后，数据文件在 _MEIPASS 中
+        return Path(sys._MEIPASS)
+    return Path(__file__).resolve().parent.parent
+
+
+BASE_DIR = _get_base_dir()
 app = FastAPI(title="HAKON 智能剧本处理系统")
 
-app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
-templates = Jinja2Templates(directory=BASE_DIR / "templates")
+# 静态文件和模板目录
+_static_dir = BASE_DIR / "static"
+_template_dir = BASE_DIR / "templates"
+# 如果在打包环境中数据目录不存在，尝试 exe 所在目录（用户可能手动放置资源）
+if not _static_dir.exists() and getattr(sys, "frozen", False):
+    _exe_dir = Path(sys.executable).resolve().parent
+    _static_dir = _exe_dir / "static"
+    _template_dir = _exe_dir / "templates"
+
+app.mount("/static", StaticFiles(directory=_static_dir), name="static")
+templates = Jinja2Templates(directory=_template_dir)
 
 
 # ──────────────────────────────────────────────

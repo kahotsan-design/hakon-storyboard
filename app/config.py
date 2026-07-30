@@ -1,8 +1,47 @@
 """全局配置：DeepSeek API 与服务参数。"""
 import os
+import sys
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+
+def _find_env_file() -> Path | None:
+    """查找 .env 文件，兼容 PyInstaller 打包环境。
+
+    查找顺序:
+    1. 当前工作目录（用户自定义 .env）
+    2. exe 所在目录（桌面应用场景）
+    3. _MEIPASS 临时目录（打包时内置的 .env）
+    4. 项目根目录（开发环境）
+    """
+    candidates = []
+    
+    # 当前工作目录
+    candidates.append(Path.cwd() / ".env")
+    
+    # PyInstaller 打包环境
+    if getattr(sys, "frozen", False):
+        # exe 所在目录
+        candidates.append(Path(sys.executable).resolve().parent / ".env")
+        # _MEIPASS 临时解压目录（打包时内置的 .env）
+        if hasattr(sys, "_MEIPASS"):
+            candidates.append(Path(sys._MEIPASS) / ".env")
+    else:
+        # 开发环境：项目根目录
+        candidates.append(Path(__file__).resolve().parent.parent / ".env")
+    
+    for path in candidates:
+        if path.exists():
+            return path
+    return None
+
+
+# 加载 .env
+_env_file = _find_env_file()
+if _env_file:
+    load_dotenv(_env_file)
+else:
+    load_dotenv()  # fallback to default behavior
 
 
 class Config:
