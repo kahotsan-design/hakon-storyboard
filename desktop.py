@@ -2,6 +2,7 @@
 
 双击运行后弹出独立桌面窗口，内嵌完整应用界面。
 无浏览器、无黑色控制台、像一个正常的桌面软件。
+不在用户桌面或 exe 目录生成任何文件。
 """
 import os
 import sys
@@ -9,12 +10,15 @@ import time
 import threading
 import socket
 import logging
+import tempfile
 
-# 日志写入文件，不显示控制台
+# 日志写入系统临时目录，不在用户桌面或 exe 目录生成任何文件
+_log_dir = os.path.join(tempfile.gettempdir(), "HAKON")
+os.makedirs(_log_dir, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    filename=os.path.join(os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.path.dirname(__file__), "HAKON.log"),
+    filename=os.path.join(_log_dir, "HAKON.log"),
     filemode="a",
 )
 logger = logging.getLogger("HAKON")
@@ -56,12 +60,12 @@ def start_server(port, ready_event):
             app,
             host="127.0.0.1",
             port=port,
-            log_level="warning",  # 减少日志输出
+            log_level="warning",
             log_config=None,
         )
     except Exception as e:
         logger.error(f"Server failed: {e}", exc_info=True)
-        ready_event.set()  # 释放等待
+        ready_event.set()
 
 
 def main():
@@ -78,13 +82,10 @@ def main():
 
     # 等待服务器就绪
     if not wait_for_server(port, timeout=30):
-        # 服务器启动失败
+        # 服务器启动失败 - 用 Windows 原生消息框提示
         try:
-            import tkinter as tk
-            from tkinter import messagebox
-            root = tk.Tk()
-            root.withdraw()
-            messagebox.showerror("HAKON", "服务器启动失败，请检查 HAKON.log 文件。")
+            import ctypes
+            ctypes.windll.user32.MessageBoxW(0, "Server startup failed. Check log in temp folder.", "HAKON", 0x10)
         except Exception:
             pass
         sys.exit(1)
