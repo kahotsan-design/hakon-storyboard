@@ -171,6 +171,64 @@ async def health():
     }
 
 
+# ──────────────────────────────────────────────
+# 设置接口
+# ──────────────────────────────────────────────
+
+class ApiKeyRequest(BaseModel):
+    api_key: str = Field(..., min_length=1, description="DeepSeek API Key")
+
+
+@app.post("/api/settings/apikey")
+async def update_api_key(req: ApiKeyRequest):
+    """更新 DeepSeek API Key，写入 .env 文件并热更新配置。"""
+    try:
+        import os as _os
+        from pathlib import Path as _Path
+
+        api_key = req.api_key.strip()
+
+        # 确定 .env 文件路径
+        if getattr(sys, "frozen", False):
+            # 打包环境：写到 exe 所在目录
+            env_path = _Path(sys.executable).resolve().parent / ".env"
+        else:
+            # 开发环境：项目根目录
+            env_path = _Path(__file__).resolve().parent.parent / ".env"
+
+        # 写入或更新 .env 文件
+        lines = []
+        if env_path.exists():
+            with open(env_path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+
+        key_found = False
+        new_lines = []
+        for line in lines:
+            if line.strip().startswith("DEEPSEEK_API_KEY="):
+                new_lines.append(f"DEEPSEEK_API_KEY={api_key}\n")
+                key_found = True
+            else:
+                new_lines.append(line)
+
+        if not key_found:
+            new_lines.append(f"DEEPSEEK_API_KEY={api_key}\n")
+
+        with open(env_path, "w", encoding="utf-8") as f:
+            f.writelines(new_lines)
+
+        # 热更新配置
+        _os.environ["DEEPSEEK_API_KEY"] = api_key
+        config.DEEPSEEK_API_KEY = api_key
+
+        logger.info(f"API Key 已更新: {api_key[:8]}...{api_key[-4:]}")
+
+        return {"status": "ok", "message": "API Key 配置成功"}
+    except Exception as e:
+        logger.error(f"API Key 更新失败: {e}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"配置失败：{str(e)[:200]}")
+
+
 @app.on_event("startup")
 async def startup_event():
     """服务启动时记录日志。"""

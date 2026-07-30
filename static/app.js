@@ -67,6 +67,72 @@ function generateSnow() {
 initGate();
 generateSnow();
 
+// ════════ 设置弹窗 ════════
+function initSettings() {
+  const btn = $("settings-btn");
+  const overlay = $("settings-overlay");
+  const closeBtn = $("settings-close");
+  const saveBtn = $("save-api-key");
+  const input = $("api-key-input");
+  const msg = $("settings-msg");
+
+  function open() {
+    overlay.classList.remove("hidden");
+    msg.textContent = "";
+    msg.className = "settings-msg";
+    setTimeout(() => input.focus(), 100);
+  }
+
+  function close() {
+    overlay.classList.add("hidden");
+  }
+
+  btn.addEventListener("click", open);
+  closeBtn.addEventListener("click", close);
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) close();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !overlay.classList.contains("hidden")) close();
+  });
+
+  saveBtn.addEventListener("click", async () => {
+    const key = input.value.trim();
+    if (!key) {
+      msg.textContent = "请输入 API Key";
+      msg.className = "settings-msg error";
+      return;
+    }
+    saveBtn.disabled = true;
+    saveBtn.textContent = "保存中...";
+    msg.textContent = "";
+    msg.className = "settings-msg";
+    try {
+      const resp = await fetch("/api/settings/apikey", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ api_key: key }),
+      });
+      const data = await resp.json();
+      if (resp.ok) {
+        msg.textContent = "配置成功！";
+        msg.className = "settings-msg success";
+        input.value = "";
+        setTimeout(close, 1200);
+      } else {
+        msg.textContent = data.detail || "配置失败";
+        msg.className = "settings-msg error";
+      }
+    } catch (e) {
+      msg.textContent = "网络错误，请重试";
+      msg.className = "settings-msg error";
+    }
+    saveBtn.disabled = false;
+    saveBtn.textContent = "保存配置";
+  });
+}
+initSettings();
+
 const MODE_CONFIG = {
   normal: {
     stepLabels: {

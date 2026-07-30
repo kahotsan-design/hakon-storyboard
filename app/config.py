@@ -46,7 +46,11 @@ else:
 
 class Config:
     # DeepSeek API（OpenAI 兼容协议）
-    DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+    # API Key 来源优先级:
+    #   1. 环境变量 DEEPSEEK_API_KEY（PyInstaller runtime hook 注入）
+    #   2. .env 文件
+    #   3. HAKON_API_KEY 环境变量（构建时注入的默认值）
+    DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "") or os.getenv("HAKON_API_KEY", "")
     DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
     DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
 

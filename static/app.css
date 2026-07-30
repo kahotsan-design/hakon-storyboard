@@ -244,6 +244,116 @@ body {
   letter-spacing: 0.5px;
   font-weight: 500;
 }
+
+/* 右上角设置按钮 */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.settings-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.settings-btn:hover {
+  color: var(--accent);
+  background: var(--frost);
+}
+.settings-btn:active { transform: scale(0.92); }
+
+/* 设置弹窗 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26, 58, 82, 0.3);
+  backdrop-filter: blur(4px);
+  animation: modal-fade 0.2s ease;
+}
+@keyframes modal-fade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.modal-content {
+  background: var(--bg-elev);
+  border-radius: 16px;
+  box-shadow: 0 12px 48px rgba(26, 58, 82, 0.2);
+  width: 460px;
+  max-width: 90vw;
+  overflow: hidden;
+  animation: modal-slide 0.25s ease;
+}
+@keyframes modal-slide {
+  0% { transform: translateY(-20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-header h2 {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+}
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.modal-close:hover { color: var(--text); }
+.modal-body {
+  padding: 24px;
+}
+.api-key-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.api-key-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(46, 124, 196, 0.12);
+}
+.settings-hint {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.settings-msg {
+  margin-top: 12px;
+  font-size: 13px;
+  text-align: center;
+  min-height: 20px;
+}
+.settings-msg.success { color: var(--green); }
+.settings-msg.error { color: var(--red); }
 .topbar h1 {
   font-size: 19px;
   font-weight: 600;
