@@ -15,7 +15,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [1/4] Installing dependencies...
+echo [1/5] Installing dependencies...
 pip install -r requirements.txt
 pip install pyinstaller
 if errorlevel 1 (
@@ -25,7 +25,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [2/4] Checking .env file...
+echo [2/5] Checking .env file...
 if not exist .env (
     echo [WARNING] .env file not found.
     set /p APIKEY=Please enter your DeepSeek API Key: 
@@ -37,7 +37,7 @@ if not exist .env (
 )
 
 echo.
-echo [3/4] Building...
+echo [3/5] Building executable...
 python -m PyInstaller hakon_desktop.spec --noconfirm
 if errorlevel 1 (
     echo [ERROR] Build failed.
@@ -46,13 +46,54 @@ if errorlevel 1 (
 )
 
 echo.
-echo [4/4] Build complete!
+echo [4/5] Checking Inno Setup...
+where iscc >nul 2>&1
+if errorlevel 1 (
+    if exist "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" (
+        set "ISCC=C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+    ) else (
+        echo [WARNING] Inno Setup not found. Skipping installer creation.
+        echo You can download Inno Setup from: https://jrsoftware.org/isdl.php
+        echo.
+        echo ============================================================
+        echo   Build complete! (exe only, no installer)
+        echo ============================================================
+        echo   Output: dist\HAKON\HAKON.exe
+        echo.
+        echo To create a setup installer, install Inno Setup and run this script again.
+        echo.
+        pause
+        exit /b 0
+    )
+) else (
+    set "ISCC=iscc"
+)
+
+echo.
+echo [5/5] Creating installer...
+if not exist installer_output mkdir installer_output
+"%ISCC%" hakon_installer.iss
+if errorlevel 1 (
+    echo [WARNING] Installer creation failed. You can still use dist\HAKON\HAKON.exe directly.
+    echo.
+    echo ============================================================
+    echo   Build complete! (exe only, no installer)
+    echo ============================================================
+    echo   Output: dist\HAKON\HAKON.exe
+    echo.
+    pause
+    exit /b 0
+)
+
+echo.
 echo ============================================================
-echo   Output folder: dist\HAKON\
-echo   Main program:  dist\HAKON\HAKON.exe
+echo   Build complete!
+echo ============================================================
+echo   Installer:   installer_output\HAKON_Setup.exe
+echo   Standalone:  dist\HAKON\HAKON.exe
 echo ============================================================
 echo.
-echo Double-click HAKON.exe to run the app.
-echo Send the entire dist\HAKON folder to others.
+echo Send HAKON_Setup.exe to your colleagues.
+echo They double-click it, install, and HAKON icon appears on desktop.
 echo.
 pause

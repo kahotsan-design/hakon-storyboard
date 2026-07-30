@@ -1,8 +1,8 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller 打包配置 - 桌面窗口应用。
+"""PyInstaller 打包配置 - 单文件桌面窗口应用。
 
-打包后是一个文件夹（dist/HAKON/），内含 HAKON.exe 和 _internal/。
-整个文件夹复制给别人即可使用。
+打包后生成一个 HAKON.exe，不依赖任何文件夹，放哪都能用。
+双击运行 → 弹出桌面窗口 → 内嵌完整应用界面。
 
 打包命令：
   python -m PyInstaller hakon_desktop.spec --noconfirm
@@ -54,9 +54,6 @@ hiddenimports += [
     "sniffio",
     "certifi",
     "idna",
-    "clr",  # webview Windows 需要的 .NET bridge
-    "pythoncom",
-    "win32com",
 ]
 
 # 数据文件
@@ -94,6 +91,7 @@ a = Analysis(
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
+# 单文件模式：所有东西打包进一个 HAKON.exe
 exe = EXE(
     pyz,
     a.scripts,
@@ -106,11 +104,13 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,  # 不显示控制台窗口！
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=False,  # 不显示控制台窗口
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,  # 可以设为 "static/hakon_logo.ico"
+    icon="static/hakon_logo.ico",  # 深蓝色雪花图标
 )
