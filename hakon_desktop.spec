@@ -74,7 +74,7 @@ a = Analysis(
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=["hakon_runtime_hook"],  # 启动时加载内置 .env
+    runtime_hooks=["hakon_runtime_hook.py"],  # 启动时加载内置 .env
     excludes=[
         "tkinter",
         "matplotlib",
