@@ -38,7 +38,7 @@ if not exist .env (
 
 echo.
 echo [3/4] Building...
-pyinstaller hakon_desktop.spec --noconfirm
+python -m PyInstaller hakon_desktop.spec --noconfirm
 if errorlevel 1 (
     echo [ERROR] Build failed.
     pause
